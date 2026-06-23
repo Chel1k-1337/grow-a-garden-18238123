@@ -114,17 +114,18 @@ function ui:Init(autobuy_module)
     end
     game.Players.LocalPlayer.CharacterAdded:Connect(setupCharacter)
 
-    PlayerTab:CreateSlider({
+    PlayerTab:CreateInput({
        Name = "Ускорение (WalkSpeed)",
-       Range = {16, 70}, -- Максимум 70, как ты просил
-       Increment = 1,
-       Suffix = " Speed",
-       CurrentValue = 16,
-       Flag = "WalkSpeedSlider",
-       Callback = function(Value)
-            targetWalkSpeed = Value
-            if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-                game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+       PlaceholderText = "Введите скорость (например: 1000)",
+       RemoveTextAfterFocusLost = false,
+       Callback = function(Text)
+            local speed = tonumber(Text)
+            if speed then
+                if speed > 1000 then speed = 1000 end
+                targetWalkSpeed = speed
+                if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = speed
+                end
             end
        end,
     })

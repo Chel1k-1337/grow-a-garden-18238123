@@ -145,6 +145,75 @@ function ui:Init(autobuy_module)
        end,
     })
 
+    -- Универсальные функции
+    local UserInputService = game:GetService("UserInputService")
+    local RunService = game:GetService("RunService")
+    
+    local infiniteJumpEnabled = false
+    UserInputService.JumpRequest:Connect(function()
+        if infiniteJumpEnabled then
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end)
+    
+    PlayerTab:CreateToggle({
+       Name = "Бесконечный прыжок (Infinite Jump)",
+       CurrentValue = false,
+       Flag = "InfiniteJump",
+       Callback = function(Value)
+            infiniteJumpEnabled = Value
+       end,
+    })
+
+    local noclipEnabled = false
+    RunService.Stepped:Connect(function()
+        if noclipEnabled then
+            local char = game.Players.LocalPlayer.Character
+            if char then
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end
+    end)
+    
+    PlayerTab:CreateToggle({
+       Name = "Хождение сквозь стены (Noclip)",
+       CurrentValue = false,
+       Flag = "Noclip",
+       Callback = function(Value)
+            noclipEnabled = Value
+       end,
+    })
+    
+    -- ==========================================
+    -- Вкладка "Разное" (Универсальные скрипты)
+    -- ==========================================
+    local MiscTab = Window:CreateTab("Разное", 4483362458)
+    
+    MiscTab:CreateButton({
+       Name = "Включить Anti-AFK (Анти-кик)",
+       Callback = function()
+            local vu = game:GetService("VirtualUser")
+            game.Players.LocalPlayer.Idled:Connect(function()
+                vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+                task.wait(1)
+                vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+            end)
+            Rayfield:Notify({
+                Title = "Anti-AFK",
+                Content = "Успешно! Теперь игра не выкинет вас за бездействие 20 минут.",
+                Duration = 3,
+                Image = 4483362458,
+            })
+       end,
+    })
+
     local clickTpEnabled = false
     local UserInputService = game:GetService("UserInputService")
     local mouse = game.Players.LocalPlayer:GetMouse()

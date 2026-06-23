@@ -6,6 +6,9 @@ local lazarus = {}
 lazarus.ESPEnabled = false
 lazarus.HitboxEnabled = false
 lazarus.HitboxSize = 10
+lazarus.InfiniteAmmoEnabled = false
+lazarus.NoRecoilEnabled = false
+lazarus.RapidFireEnabled = false
 
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
@@ -88,6 +91,39 @@ function lazarus:Init()
                         highlight:Destroy()
                     end
                 end
+            end
+        end
+    end)
+
+    -- Оружейные модули (через getgc)
+    task.spawn(function()
+        while true do
+            task.wait(3)
+            if lazarus.InfiniteAmmoEnabled or lazarus.NoRecoilEnabled or lazarus.RapidFireEnabled then
+                pcall(function()
+                    for _, v in pairs(getgc(true)) do
+                        if type(v) == "table" then
+                            if rawget(v, "Ammo") or rawget(v, "StoredAmmo") or rawget(v, "Recoil") or rawget(v, "FireRate") then
+                                if lazarus.InfiniteAmmoEnabled then
+                                    if rawget(v, "Ammo") then v.Ammo = 9999 end
+                                    if rawget(v, "StoredAmmo") then v.StoredAmmo = 9999 end
+                                    if rawget(v, "Mag") then v.Mag = 9999 end
+                                    if rawget(v, "MaxAmmo") then v.MaxAmmo = 9999 end
+                                end
+                                if lazarus.NoRecoilEnabled then
+                                    if rawget(v, "Recoil") then v.Recoil = 0 end
+                                    if rawget(v, "Spread") then v.Spread = 0 end
+                                    if rawget(v, "MinSpread") then v.MinSpread = 0 end
+                                    if rawget(v, "MaxSpread") then v.MaxSpread = 0 end
+                                end
+                                if lazarus.RapidFireEnabled then
+                                    if rawget(v, "FireRate") then v.FireRate = 0.05 end
+                                    if rawget(v, "Cooldown") then v.Cooldown = 0.05 end
+                                end
+                            end
+                        end
+                    end
+                end)
             end
         end
     end)

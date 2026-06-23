@@ -446,6 +446,33 @@ function ui:Init(autobuy_module, lazarus_module)
                 lazarus_module.HitboxSize = Value
            end,
         })
+        
+        LazarusTab:CreateToggle({
+           Name = "Бесконечные патроны (Infinite Ammo)",
+           CurrentValue = false,
+           Flag = "LazarusInfAmmo",
+           Callback = function(Value)
+                lazarus_module.InfiniteAmmoEnabled = Value
+           end,
+        })
+        
+        LazarusTab:CreateToggle({
+           Name = "Без отдачи (No Recoil)",
+           CurrentValue = false,
+           Flag = "LazarusNoRecoil",
+           Callback = function(Value)
+                lazarus_module.NoRecoilEnabled = Value
+           end,
+        })
+        
+        LazarusTab:CreateToggle({
+           Name = "Скорострельность (Rapid Fire)",
+           CurrentValue = false,
+           Flag = "LazarusRapidFire",
+           Callback = function(Value)
+                lazarus_module.RapidFireEnabled = Value
+           end,
+        })
     end
 end
 

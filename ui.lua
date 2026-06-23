@@ -2,13 +2,13 @@
 -- Графический интерфейс с использованием Rayfield (очень надежная библиотека)
 local ui = {}
 
-function ui:Init(autobuy_module, lazarus_module)
+function ui:Init(autobuy_module, lazarus_module, drone_module)
     -- Загружаем Rayfield UI с официального сайта (ссылка Orion, к сожалению, умерла на GitHub)
     local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
     -- Создаем главное окно
     local Window = Rayfield:CreateWindow({
-       Name = "Grow a Garden 2 | Авто-Скупка",
+       Name = "Universal Hub | Grow a Garden 2",
        LoadingTitle = "Загрузка интерфейса...",
        LoadingSubtitle = "by Antigravity",
        ConfigurationSaving = {
@@ -473,6 +473,45 @@ function ui:Init(autobuy_module, lazarus_module)
                 lazarus_module.RapidFireEnabled = Value
            end,
         })
+    end
+
+    -- ==========================================
+    -- Вкладка "Drone Point"
+    -- ==========================================
+    if drone_module then
+        local DroneTab = Window:CreateTab("Drone Point", 4483362458)
+        
+        DroneTab:CreateToggle({
+           Name = "ESP на дронов (Подсветка)",
+           CurrentValue = false,
+           Flag = "DroneESP",
+           Callback = function(Value)
+                drone_module.ESPEnabled = Value
+           end,
+        })
+        
+        DroneTab:CreateToggle({
+           Name = "Кружок упреждения (Lead Indicator)",
+           CurrentValue = false,
+           Flag = "DroneLead",
+           Callback = function(Value)
+                drone_module.LeadIndicatorEnabled = Value
+           end,
+        })
+        
+        DroneTab:CreateSlider({
+           Name = "Скорость твоего снаряда",
+           Range = {100, 5000},
+           Increment = 50,
+           Suffix = " Velocity",
+           CurrentValue = 1000,
+           Flag = "DroneBulletSpeed",
+           Callback = function(Value)
+                drone_module.BulletSpeed = Value
+           end,
+        })
+        
+        DroneTab:CreateParagraph({Title = "Как работает упреждение:", Content = "Зеленый кружок показывает точку, в которую нужно стрелять прямо сейчас, чтобы пуля долетела ровно в тот момент, когда дрон будет в этой точке. Подстрой скорость снаряда под свое оружие!"})
     end
 end
 

@@ -197,6 +197,40 @@ function ui:Init(autobuy_module)
        end,
     })
 
+    local godModeConnection = nil
+    PlayerTab:CreateToggle({
+       Name = "Бесконечное ХП (God Mode)",
+       CurrentValue = false,
+       Flag = "GodMode",
+       Callback = function(Value)
+            if Value then
+                godModeConnection = RunService.RenderStepped:Connect(function()
+                    local char = game.Players.LocalPlayer.Character
+                    if char and char:FindFirstChild("Humanoid") then
+                        local hum = char.Humanoid
+                        -- Если сервер доверяет клиенту, это сделает вас бессмертным
+                        hum.MaxHealth = math.huge
+                        hum.Health = math.huge
+                    end
+                end)
+            else
+                if godModeConnection then
+                    godModeConnection:Disconnect()
+                    godModeConnection = nil
+                end
+                -- Пытаемся вернуть нормальное ХП при выключении
+                local char = game.Players.LocalPlayer.Character
+                if char and char:FindFirstChild("Humanoid") then
+                    local hum = char.Humanoid
+                    if hum.MaxHealth > 1000000 then
+                        hum.MaxHealth = 100
+                        hum.Health = 100
+                    end
+                end
+            end
+       end,
+    })
+
     -- ==========================================
     -- Вкладка "Визуалы" (ESP - CS2 Style)
     -- ==========================================

@@ -170,6 +170,33 @@ function ui:Init(autobuy_module)
         end
     end)
 
+    local RunService = game:GetService("RunService")
+    local mouseUnlockConnection = nil
+
+    PlayerTab:CreateToggle({
+       Name = "Разблокировать мышку и 3-е лицо",
+       CurrentValue = false,
+       Flag = "UnlockMouseCam",
+       Callback = function(Value)
+            if Value then
+                -- Отдаляем камеру
+                local player = game.Players.LocalPlayer
+                player.CameraMaxZoomDistance = 128
+                
+                -- Постоянно освобождаем мышку (так как игра может пытаться ее спрятать)
+                mouseUnlockConnection = RunService.RenderStepped:Connect(function()
+                    game:GetService("UserInputService").MouseBehavior = Enum.MouseBehavior.Default
+                end)
+            else
+                -- Возвращаем настройки по умолчанию (игра сама заблокирует обратно)
+                if mouseUnlockConnection then
+                    mouseUnlockConnection:Disconnect()
+                    mouseUnlockConnection = nil
+                end
+            end
+       end,
+    })
+
     -- ==========================================
     -- Вкладка "Визуалы" (ESP - CS2 Style)
     -- ==========================================

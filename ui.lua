@@ -2,7 +2,7 @@
 -- Графический интерфейс с использованием Rayfield (очень надежная библиотека)
 local ui = {}
 
-function ui:Init(autobuy_module)
+function ui:Init(autobuy_module, lazarus_module)
     -- Загружаем Rayfield UI с официального сайта (ссылка Orion, к сожалению, умерла на GitHub)
     local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
@@ -416,6 +416,45 @@ function ui:Init(autobuy_module)
             espEnabled = Value
        end,
     })
+
+    -- ==========================================
+    -- Вкладка "Project Lazarus"
+    -- ==========================================
+    if lazarus_module then
+        local LazarusTab = Window:CreateTab("Project Lazarus", 4483362458)
+        
+        LazarusTab:CreateParagraph({Title = "Внимание", Content = "Эти функции работают ТОЛЬКО в режиме Project Lazarus: Zombies."})
+        
+        LazarusTab:CreateToggle({
+           Name = "Zombie ESP (Подсветка зомби сквозь стены)",
+           CurrentValue = false,
+           Flag = "LazarusESP",
+           Callback = function(Value)
+                lazarus_module.ESPEnabled = Value
+           end,
+        })
+        
+        LazarusTab:CreateToggle({
+           Name = "Hitbox Expander (Гигантские головы)",
+           CurrentValue = false,
+           Flag = "LazarusHitbox",
+           Callback = function(Value)
+                lazarus_module.HitboxEnabled = Value
+           end,
+        })
+        
+        LazarusTab:CreateSlider({
+           Name = "Размер головы зомби",
+           Range = {5, 20},
+           Increment = 1,
+           Suffix = " Size",
+           CurrentValue = 10,
+           Flag = "LazarusHitboxSize",
+           Callback = function(Value)
+                lazarus_module.HitboxSize = Value
+           end,
+        })
+    end
 end
 
 return ui

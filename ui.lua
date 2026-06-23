@@ -266,35 +266,27 @@ function ui:Init(autobuy_module, lazarus_module)
        end,
     })
 
-    local godModeConnection = nil
+    local healConnection = nil
     PlayerTab:CreateToggle({
-       Name = "Бесконечное ХП (God Mode)",
+       Name = "Быстрая регенерация (Auto-Heal)",
        CurrentValue = false,
-       Flag = "GodMode",
+       Flag = "AutoHeal",
        Callback = function(Value)
             if Value then
-                godModeConnection = RunService.RenderStepped:Connect(function()
+                healConnection = RunService.RenderStepped:Connect(function()
                     local char = game.Players.LocalPlayer.Character
                     if char and char:FindFirstChild("Humanoid") then
                         local hum = char.Humanoid
-                        -- Если сервер доверяет клиенту, это сделает вас бессмертным
-                        hum.MaxHealth = math.huge
-                        hum.Health = math.huge
+                        -- Если ХП упало, моментально хилим до полного
+                        if hum.Health < hum.MaxHealth and hum.Health > 0 then
+                            hum.Health = hum.MaxHealth
+                        end
                     end
                 end)
             else
-                if godModeConnection then
-                    godModeConnection:Disconnect()
-                    godModeConnection = nil
-                end
-                -- Пытаемся вернуть нормальное ХП при выключении
-                local char = game.Players.LocalPlayer.Character
-                if char and char:FindFirstChild("Humanoid") then
-                    local hum = char.Humanoid
-                    if hum.MaxHealth > 1000000 then
-                        hum.MaxHealth = 100
-                        hum.Health = 100
-                    end
+                if healConnection then
+                    healConnection:Disconnect()
+                    healConnection = nil
                 end
             end
        end,

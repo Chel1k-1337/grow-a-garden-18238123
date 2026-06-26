@@ -427,23 +427,23 @@ function ui:Init(autobuy_module, lazarus_module, drone_module)
         })
         
         LazarusTab:CreateToggle({
-           Name = "Hitbox Expander (Гигантские головы)",
+           Name = "Silent Aim (Невидимый аим на зомби)",
            CurrentValue = false,
-           Flag = "LazarusHitbox",
+           Flag = "LazarusSilentAim",
            Callback = function(Value)
-                lazarus_module.HitboxEnabled = Value
+                lazarus_module.SilentAimEnabled = Value
            end,
         })
         
         LazarusTab:CreateSlider({
-           Name = "Размер головы зомби",
-           Range = {5, 20},
-           Increment = 1,
-           Suffix = " Size",
-           CurrentValue = 10,
-           Flag = "LazarusHitboxSize",
+           Name = "Радиус захвата (FOV)",
+           Range = {50, 500},
+           Increment = 10,
+           Suffix = " px",
+           CurrentValue = 150,
+           Flag = "LazarusSilentAimFOV",
            Callback = function(Value)
-                lazarus_module.HitboxSize = Value
+                lazarus_module.SilentAimFOV = Value
            end,
         })
         

@@ -4,8 +4,8 @@
 local lazarus = {}
 
 lazarus.ESPEnabled = false
-lazarus.HitboxEnabled = false
-lazarus.HitboxSize = 10
+lazarus.SilentAimEnabled = false
+lazarus.SilentAimFOV = 150
 lazarus.InfiniteAmmoEnabled = false
 lazarus.NoRecoilEnabled = false
 lazarus.RapidFireEnabled = false
@@ -59,19 +59,7 @@ function lazarus:Init()
             if obj and obj.Parent and obj:FindFirstChild("Head") and obj:FindFirstChild("Humanoid") and obj.Humanoid.Health > 0 then
                 local head = obj.Head
                 
-                -- 1. Увеличение хитбоксов
-                if lazarus.HitboxEnabled then
-                    head.Size = Vector3.new(lazarus.HitboxSize, lazarus.HitboxSize, lazarus.HitboxSize)
-                    head.Transparency = 0.7
-                    head.BrickColor = BrickColor.new("Bright red")
-                    head.CanCollide = false
-                else
-                    if head.Size.X > 5 then
-                        -- Возвращаем примерный размер головы
-                        head.Size = Vector3.new(1.2, 1.2, 1.2)
-                        head.Transparency = 0
-                    end
-                end
+                -- Хитбоксы удалены по просьбе пользователя
 
                 -- 2. ESP на зомби
                 local highlight = obj:FindFirstChild("LazarusESP")
@@ -126,6 +114,60 @@ function lazarus:Init()
                 end)
             end
         end
+    end)
+
+    -- Сайлент Аим (через хук метатаблиц)
+    local Camera = workspace.CurrentCamera
+    local UserInputService = game:GetService("UserInputService")
+    
+    local function getClosestZombieToMouse()
+        local mousePos = UserInputService:GetMouseLocation()
+        local closestZombie = nil
+        local shortestDist = math.huge
+        
+        for _, obj in pairs(zombies) do
+            if obj and obj.Parent and obj:FindFirstChild("Head") and obj:FindFirstChild("Humanoid") and obj.Humanoid.Health > 0 then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(obj.Head.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                    if dist < lazarus.SilentAimFOV then
+                        shortestDist = dist
+                        closestZombie = obj
+                    end
+                end
+            end
+        end
+        return closestZombie
+    end
+
+    local oldNamecall
+    oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        
+        if lazarus.SilentAimEnabled and not checkcaller() then
+            if method == "Raycast" then
+                local origin = args[1]
+                local closestZombie = getClosestZombieToMouse()
+                if closestZombie and closestZombie:FindFirstChild("Head") then
+                    local headPos = closestZombie.Head.Position
+                    local newDirection = (headPos - origin).Unit * 1000
+                    args[2] = newDirection
+                    return oldNamecall(self, unpack(args))
+                end
+            elseif method == "FindPartOnRay" or method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRayWithWhitelist" then
+                local ray = args[1]
+                local closestZombie = getClosestZombieToMouse()
+                if closestZombie and closestZombie:FindFirstChild("Head") then
+                    local headPos = closestZombie.Head.Position
+                    local newDirection = (headPos - ray.Origin).Unit * ray.Direction.Magnitude
+                    args[1] = Ray.new(ray.Origin, newDirection)
+                    return oldNamecall(self, unpack(args))
+                end
+            end
+        end
+        
+        return oldNamecall(self, ...)
     end)
 end
 

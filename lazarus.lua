@@ -140,35 +140,39 @@ function lazarus:Init()
         return closestZombie
     end
 
-    local oldNamecall
-    oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-        local method = getnamecallmethod()
-        local args = {...}
-        
-        if lazarus.SilentAimEnabled and not checkcaller() then
-            if method == "Raycast" then
-                local origin = args[1]
-                local closestZombie = getClosestZombieToMouse()
-                if closestZombie and closestZombie:FindFirstChild("Head") then
-                    local headPos = closestZombie.Head.Position
-                    local newDirection = (headPos - origin).Unit * 1000
-                    args[2] = newDirection
-                    return oldNamecall(self, unpack(args))
-                end
-            elseif method == "FindPartOnRay" or method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRayWithWhitelist" then
-                local ray = args[1]
-                local closestZombie = getClosestZombieToMouse()
-                if closestZombie and closestZombie:FindFirstChild("Head") then
-                    local headPos = closestZombie.Head.Position
-                    local newDirection = (headPos - ray.Origin).Unit * ray.Direction.Magnitude
-                    args[1] = Ray.new(ray.Origin, newDirection)
-                    return oldNamecall(self, unpack(args))
+    if hookmetamethod then
+        local oldNamecall
+        oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+            local method = getnamecallmethod()
+            local args = {...}
+            
+            if lazarus.SilentAimEnabled and not checkcaller() then
+                if method == "Raycast" then
+                    local origin = args[1]
+                    local closestZombie = getClosestZombieToMouse()
+                    if closestZombie and closestZombie:FindFirstChild("Head") then
+                        local headPos = closestZombie.Head.Position
+                        local newDirection = (headPos - origin).Unit * 1000
+                        args[2] = newDirection
+                        return oldNamecall(self, unpack(args))
+                    end
+                elseif method == "FindPartOnRay" or method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRayWithWhitelist" then
+                    local ray = args[1]
+                    local closestZombie = getClosestZombieToMouse()
+                    if closestZombie and closestZombie:FindFirstChild("Head") then
+                        local headPos = closestZombie.Head.Position
+                        local newDirection = (headPos - ray.Origin).Unit * ray.Direction.Magnitude
+                        args[1] = Ray.new(ray.Origin, newDirection)
+                        return oldNamecall(self, unpack(args))
+                    end
                 end
             end
-        end
-        
-        return oldNamecall(self, ...)
-    end)
+            
+            return oldNamecall(self, ...)
+        end)
+    else
+        warn("Твой экзекутор не поддерживает hookmetamethod! Silent Aim работать не будет.")
+    end
 end
 
 return lazarus

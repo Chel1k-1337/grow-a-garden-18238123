@@ -140,7 +140,8 @@ function lazarus:Init()
         return closestZombie
     end
 
-    if type(hookmetamethod) == "function" and type(getnamecallmethod) == "function" then
+    local success = pcall(function() return hookmetamethod end)
+    if success and hookmetamethod then
         local oldNamecall
         oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
             local method = getnamecallmethod()

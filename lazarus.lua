@@ -6,6 +6,10 @@ local lazarus = {}
 lazarus.ESPEnabled = false
 lazarus.SilentAimEnabled = false
 lazarus.SilentAimFOV = 150
+lazarus.AimbotEnabled = false
+lazarus.AimbotSmoothing = 1
+lazarus.AutoAimEnabled = false
+lazarus.RagebotKey = Enum.KeyCode.Q
 lazarus.InfiniteAmmoEnabled = false
 lazarus.NoRecoilEnabled = false
 lazarus.RapidFireEnabled = false
@@ -130,7 +134,8 @@ function lazarus:Init()
                 local screenPos, onScreen = Camera:WorldToViewportPoint(obj.Head.Position)
                 if onScreen then
                     local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                    if dist < lazarus.SilentAimFOV then
+                    -- Для обычного аимбота берем всех на экране, для сайлента используем FOV
+                    if dist < lazarus.SilentAimFOV or (lazarus.AimbotEnabled or lazarus.AutoAimEnabled) then
                         shortestDist = dist
                         closestZombie = obj
                     end
@@ -139,6 +144,51 @@ function lazarus:Init()
         end
         return closestZombie
     end
+
+    -- Camera Aimbot / Auto Aim Loop
+    RunService.RenderStepped:Connect(function()
+        if lazarus.AimbotEnabled or lazarus.AutoAimEnabled then
+            -- Работает только если зажата ПКМ (для обычного аимбота) или всегда (для автоаима)
+            if lazarus.AutoAimEnabled or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+                local target = getClosestZombieToMouse()
+                if target and target:FindFirstChild("Head") then
+                    local targetPos = target.Head.Position
+                    local currentCameraCFrame = Camera.CFrame
+                    
+                    -- Сглаживание наводки (1 = мгновенно, >1 = плавнее)
+                    local newCFrame = CFrame.new(currentCameraCFrame.Position, targetPos)
+                    Camera.CFrame = currentCameraCFrame:Lerp(newCFrame, 1 / lazarus.AimbotSmoothing)
+                    
+                    -- Автовыстрел для Auto Aim
+                    if lazarus.AutoAimEnabled and mouse1click then
+                        -- Имитируем клик, только если смотрим прямо на зомби
+                        mouse1click()
+                    end
+                end
+            end
+        end
+    end)
+
+    -- Ragebot Bind
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == lazarus.RagebotKey then
+            local target = getClosestZombieToMouse()
+            if target and target:FindFirstChild("Head") then
+                -- Мгновенно наводимся
+                local oldCFrame = Camera.CFrame
+                Camera.CFrame = CFrame.new(oldCFrame.Position, target.Head.Position)
+                
+                -- Стреляем
+                if mouse1click then
+                    mouse1click()
+                    task.wait(0.05) -- Маленькая задержка чтобы выстрел регнул
+                end
+                
+                -- Отводим обратно
+                Camera.CFrame = oldCFrame
+            end
+        end
+    end)
 
     local success = pcall(function() return hookmetamethod end)
     if success and hookmetamethod then

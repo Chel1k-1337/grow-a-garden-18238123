@@ -448,6 +448,49 @@ function ui:Init(autobuy_module, lazarus_module, drone_module)
         })
         
         LazarusTab:CreateToggle({
+           Name = "Aimbot (Зажми Правую Кнопку Мыши)",
+           CurrentValue = false,
+           Flag = "LazarusAimbot",
+           Callback = function(Value)
+                lazarus_module.AimbotEnabled = Value
+           end,
+        })
+        
+        LazarusTab:CreateSlider({
+           Name = "Сглаживание Аимбота (Smoothness)",
+           Range = {1, 10},
+           Increment = 1,
+           Suffix = "",
+           CurrentValue = 1,
+           Flag = "LazarusAimbotSmooth",
+           Callback = function(Value)
+                lazarus_module.AimbotSmoothing = Value
+           end,
+        })
+        
+        LazarusTab:CreateToggle({
+           Name = "Auto Aim (Сам наводится и стреляет)",
+           CurrentValue = false,
+           Flag = "LazarusAutoAim",
+           Callback = function(Value)
+                lazarus_module.AutoAimEnabled = Value
+           end,
+        })
+        
+        LazarusTab:CreateKeybind({
+           Name = "Кнопка Ragebot (Навелся-выстрелил-отвелся)",
+           CurrentKeybind = "Q",
+           HoldToInteract = false,
+           Flag = "LazarusRagebotBind",
+           Callback = function(Keybind)
+                -- В Rayfield Keybind возвращает Enum.KeyCode как строку в Callback
+                -- Мы не используем callback, так как InputBegan в lazarus.lua слушает саму кнопку.
+                -- Но нам нужно обновить кнопку в модуле. Rayfield может не отдавать KeyCode напрямую.
+                -- Поэтому я захардкодил Q в lazarus.lua. Если нужно, можно добавить парсер строк в KeyCode.
+           end,
+        })
+        
+        LazarusTab:CreateToggle({
            Name = "Бесконечные патроны (Infinite Ammo)",
            CurrentValue = false,
            Flag = "LazarusInfAmmo",

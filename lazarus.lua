@@ -158,7 +158,7 @@ function lazarus:Init()
                 local screenPos, onScreen = Camera:WorldToViewportPoint(obj.Head.Position)
                 if onScreen then
                     local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                    if dist < lazarus.SilentAimFOV or lazarus.AimbotEnabled then
+                    if dist < lazarus.SilentAimFOV then
                         -- Проверка на стены для аимбота
                         local canAim = true
                         if lazarus.AimbotWallCheck then

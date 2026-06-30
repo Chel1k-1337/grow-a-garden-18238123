@@ -448,6 +448,15 @@ function ui:Init(autobuy_module, lazarus_module, drone_module)
         })
         
         LazarusTab:CreateToggle({
+           Name = "Показывать круг FOV",
+           CurrentValue = false,
+           Flag = "LazarusRenderFOV",
+           Callback = function(Value)
+                lazarus_module.RenderFOV = Value
+           end,
+        })
+        
+        LazarusTab:CreateToggle({
            Name = "Aimbot (Зажми Правую Кнопку Мыши)",
            CurrentValue = false,
            Flag = "LazarusAimbot",
@@ -467,26 +476,21 @@ function ui:Init(autobuy_module, lazarus_module, drone_module)
                 lazarus_module.AimbotSmoothing = Value
            end,
         })
-        
         LazarusTab:CreateToggle({
-           Name = "Auto Aim (Сам наводится и стреляет)",
-           CurrentValue = false,
-           Flag = "LazarusAutoAim",
+           Name = "Проверка стен для Аимбота (Wall Check)",
+           CurrentValue = true,
+           Flag = "LazarusAimbotWallCheck",
            Callback = function(Value)
-                lazarus_module.AutoAimEnabled = Value
+                lazarus_module.AimbotWallCheck = Value
            end,
         })
         
-        LazarusTab:CreateKeybind({
-           Name = "Кнопка Ragebot (Навелся-выстрелил-отвелся)",
-           CurrentKeybind = "Q",
-           HoldToInteract = false,
-           Flag = "LazarusRagebotBind",
-           Callback = function(Keybind)
-                -- В Rayfield Keybind возвращает Enum.KeyCode как строку в Callback
-                -- Мы не используем callback, так как InputBegan в lazarus.lua слушает саму кнопку.
-                -- Но нам нужно обновить кнопку в модуле. Rayfield может не отдавать KeyCode напрямую.
-                -- Поэтому я захардкодил Q в lazarus.lua. Если нужно, можно добавить парсер строк в KeyCode.
+        LazarusTab:CreateToggle({
+           Name = "TriggerBot (Автовыстрел при наведении)",
+           CurrentValue = false,
+           Flag = "LazarusTriggerBot",
+           Callback = function(Value)
+                lazarus_module.TriggerBotEnabled = Value
            end,
         })
         

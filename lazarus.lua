@@ -6,10 +6,11 @@ local lazarus = {}
 lazarus.ESPEnabled = false
 lazarus.SilentAimEnabled = false
 lazarus.SilentAimFOV = 150
+lazarus.RenderFOV = false
 lazarus.AimbotEnabled = false
+lazarus.AimbotWallCheck = true
 lazarus.AimbotSmoothing = 1
-lazarus.AutoAimEnabled = false
-lazarus.RagebotKey = Enum.KeyCode.Q
+lazarus.TriggerBotEnabled = false
 lazarus.InfiniteAmmoEnabled = false
 lazarus.NoRecoilEnabled = false
 lazarus.RapidFireEnabled = false
@@ -120,10 +121,33 @@ function lazarus:Init()
         end
     end)
 
-    -- Сайлент Аим (через хук метатаблиц)
     local Camera = workspace.CurrentCamera
     local UserInputService = game:GetService("UserInputService")
     
+    local function isVisible(targetPart)
+        local origin = Camera.CFrame.Position
+        local direction = (targetPart.Position - origin)
+        local raycastParams = RaycastParams.new()
+        
+        local ignoreList = {Camera}
+        if Players.LocalPlayer.Character then
+            table.insert(ignoreList, Players.LocalPlayer.Character)
+        end
+        raycastParams.FilterDescendantsInstances = ignoreList
+        raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+        
+        local result = workspace:Raycast(origin, direction, raycastParams)
+        if result then
+            -- Если луч попал в часть зомби, то он видим
+            if result.Instance:IsDescendantOf(targetPart.Parent) then
+                return true
+            end
+            -- Иначе перед нами стена
+            return false
+        end
+        return true
+    end
+
     local function getClosestZombieToMouse()
         local mousePos = UserInputService:GetMouseLocation()
         local closestZombie = nil
@@ -134,10 +158,17 @@ function lazarus:Init()
                 local screenPos, onScreen = Camera:WorldToViewportPoint(obj.Head.Position)
                 if onScreen then
                     local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                    -- Для обычного аимбота берем всех на экране, для сайлента используем FOV
-                    if dist < lazarus.SilentAimFOV or (lazarus.AimbotEnabled or lazarus.AutoAimEnabled) then
-                        shortestDist = dist
-                        closestZombie = obj
+                    if dist < lazarus.SilentAimFOV or lazarus.AimbotEnabled then
+                        -- Проверка на стены для аимбота
+                        local canAim = true
+                        if lazarus.AimbotWallCheck then
+                            canAim = isVisible(obj.Head)
+                        end
+                        
+                        if canAim and dist < shortestDist then
+                            shortestDist = dist
+                            closestZombie = obj
+                        end
                     end
                 end
             end
@@ -145,11 +176,27 @@ function lazarus:Init()
         return closestZombie
     end
 
-    -- Camera Aimbot / Auto Aim Loop
+    local FOVring = Drawing.new("Circle")
+    FOVring.Visible = false
+    FOVring.Thickness = 1
+    FOVring.Color = Color3.fromRGB(255, 255, 255)
+    FOVring.Filled = false
+    FOVring.Transparency = 1
+
+    -- Camera Aimbot Loop
     RunService.RenderStepped:Connect(function()
-        if lazarus.AimbotEnabled or lazarus.AutoAimEnabled then
-            -- Работает только если зажата ПКМ (для обычного аимбота) или всегда (для автоаима)
-            if lazarus.AutoAimEnabled or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        -- Обновление круга FOV
+        if lazarus.RenderFOV then
+            FOVring.Visible = true
+            FOVring.Radius = lazarus.SilentAimFOV
+            local mousePos = UserInputService:GetMouseLocation()
+            FOVring.Position = mousePos
+        else
+            FOVring.Visible = false
+        end
+
+        if lazarus.AimbotEnabled then
+            if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
                 local target = getClosestZombieToMouse()
                 if target and target:FindFirstChild("Head") then
                     local targetPos = target.Head.Position
@@ -158,34 +205,30 @@ function lazarus:Init()
                     -- Сглаживание наводки (1 = мгновенно, >1 = плавнее)
                     local newCFrame = CFrame.new(currentCameraCFrame.Position, targetPos)
                     Camera.CFrame = currentCameraCFrame:Lerp(newCFrame, 1 / lazarus.AimbotSmoothing)
-                    
-                    -- Автовыстрел для Auto Aim
-                    if lazarus.AutoAimEnabled and mouse1click then
-                        -- Имитируем клик, только если смотрим прямо на зомби
-                        mouse1click()
-                    end
                 end
             end
         end
-    end)
 
-    -- Ragebot Bind
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == lazarus.RagebotKey then
-            local target = getClosestZombieToMouse()
-            if target and target:FindFirstChild("Head") then
-                -- Мгновенно наводимся
-                local oldCFrame = Camera.CFrame
-                Camera.CFrame = CFrame.new(oldCFrame.Position, target.Head.Position)
-                
-                -- Стреляем
-                if mouse1click then
+        -- TriggerBot
+        if lazarus.TriggerBotEnabled and mouse1click then
+            -- Пускаем луч из центра экрана, чтобы проверить есть ли под прицелом зомби
+            local screenPoint = Camera.ViewportSize / 2
+            local ray = Camera:ViewportPointToRay(screenPoint.X, screenPoint.Y)
+            
+            local raycastParams = RaycastParams.new()
+            local ignoreList = {Camera}
+            if Players.LocalPlayer.Character then
+                table.insert(ignoreList, Players.LocalPlayer.Character)
+            end
+            raycastParams.FilterDescendantsInstances = ignoreList
+            raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+            
+            local result = workspace:Raycast(ray.Origin, ray.Direction * 1000, raycastParams)
+            if result and result.Instance then
+                local model = result.Instance:FindFirstAncestorOfClass("Model")
+                if model and isZombie(model) then
                     mouse1click()
-                    task.wait(0.05) -- Маленькая задержка чтобы выстрел регнул
                 end
-                
-                -- Отводим обратно
-                Camera.CFrame = oldCFrame
             end
         end
     end)
